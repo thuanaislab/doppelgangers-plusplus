@@ -11,7 +11,7 @@ import torch
 import copy
 
 from mast3r.datasets.utils.cropping import (extract_correspondences_from_pts3d,
-                                            gen_random_crops, in2d_rect, crop_to_homography)
+                                            gen_random_crops, in2d_rect, crop_to_homography, pad_image_depthmap)
 
 import mast3r.utils.path_to_dust3r  # noqa
 from dust3r.datasets.base.base_stereo_view_dataset import BaseStereoViewDataset, view_name, is_good_type  # noqa
@@ -36,6 +36,7 @@ class MASt3RBaseStereoViewDataset(BaseStereoViewDataset):
                  seed=None):
         super().__init__(split=split, resolution=resolution, transform=transform, aug_crop=aug_crop, seed=seed)
         self.is_metric_scale = False  # by default a dataset is not metric scale, subclasses can overwrite this
+        self.mast3r_crop = True
 
         self.aug_swap = aug_swap
         self.aug_monocular = aug_monocular
@@ -81,6 +82,52 @@ class MASt3RBaseStereoViewDataset(BaseStereoViewDataset):
         intrinsics2 = cropping.camera_matrix_of_crop(intrinsics, image.size, resolution, offset_factor=offset_factor)
         crop_bbox = cropping.bbox_from_intrinsics_in_out(intrinsics, intrinsics2, resolution)
         image, depthmap, intrinsics2 = cropping.crop_image_depthmap(image, depthmap, intrinsics, crop_bbox)
+
+        return image, depthmap, intrinsics2
+    
+    def _pad_resize_if_necessary(self, image, depthmap, intrinsics, resolution, rng=None, info=None):
+        """ This function:
+            - first downsizes the image with LANCZOS inteprolation,
+              which is better than bilinear interpolation in
+        """
+        if not isinstance(image, PIL.Image.Image):
+            image = PIL.Image.fromarray(image)
+
+        # downscale with lanczos interpolation so that image.size == resolution
+        # cropping centered on the principal point
+        W, H = image.size
+        cx, cy = intrinsics[:2, 2].round().astype(int)
+        min_margin_x = min(cx, W-cx)
+        min_margin_y = min(cy, H-cy)
+        assert min_margin_x > W/5, f'Bad principal point in view={info}'
+        assert min_margin_y > H/5, f'Bad principal point in view={info}'
+        # the new window will be a rectangle of size (2*min_margin_x, 2*min_margin_y) centered on (cx,cy)
+        l, t = cx - min_margin_x, cy - min_margin_y
+        r, b = cx + min_margin_x, cy + min_margin_y
+        crop_bbox = (l, t, r, b)
+        image, depthmap, intrinsics = cropping.crop_image_depthmap(image, depthmap, intrinsics, crop_bbox)
+
+        # transpose the resolution if necessary
+        W, H = image.size  # new size
+        assert resolution[0] >= resolution[1]
+        if H > 1.1*W:
+            # image is portrait mode
+            resolution = resolution[::-1]
+        elif 0.9 < H/W < 1.1 and resolution[0] != resolution[1]:
+            # image is square, so we chose (portrait, landscape) randomly
+            if rng.integers(2):
+                resolution = resolution[::-1]
+
+        # high-quality Lanczos down-scaling
+        target_resolution = np.array(resolution)
+
+        if self.aug_crop > 1:
+            target_resolution += rng.integers(0, self.aug_crop)
+        image, depthmap, intrinsics = cropping.rescale_image_depthmap(image, depthmap, intrinsics, target_resolution)
+
+        # actual cropping (if necessary) with bilinear interpolation
+        intrinsics2 = cropping.camera_matrix_of_crop(intrinsics, image.size, resolution, offset_factor=0.5)
+        image, depthmap, intrinsics2 = pad_image_depthmap(image, depthmap, intrinsics, resolution)
 
         return image, depthmap, intrinsics2
 
@@ -218,10 +265,11 @@ class MASt3RBaseStereoViewDataset(BaseStereoViewDataset):
             view['pts3d'] = pts3d
             view['valid_mask'] = valid_mask & np.isfinite(pts3d).all(axis=-1)
 
-        self.generate_crops_from_pair(views[0], views[1], resolution=resolution,
-                                      aug_crop_arg=self.aug_crop,
-                                      n_crops=self.n_tentative_crops,
-                                      rng=self._rng)
+        if self.mast3r_crop:
+            self.generate_crops_from_pair(views[0], views[1], resolution=resolution,
+                                        aug_crop_arg=self.aug_crop,
+                                        n_crops=self.n_tentative_crops,
+                                        rng=self._rng)
         for v, view in enumerate(views):
             # encode the image
             width, height = view['img'].size

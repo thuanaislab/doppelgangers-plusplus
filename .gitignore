@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+slurm.sub
+*.err
+*.out
+*.ply
+weights/
+asmk

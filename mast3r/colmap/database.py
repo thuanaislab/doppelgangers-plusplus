@@ -91,9 +91,14 @@ def convert_im_matches_pairs(img0, img1, image_to_colmap, im_keypoints, matches_
 
 
 def get_im_matches(pred1, pred2, pairs, image_to_colmap, im_keypoints, conf_thr,
-                   is_sparse=True, subsample=8, pixel_tol=0, viz=False, device='cuda'):
+                   is_sparse=True, subsample=8, pixel_tol=0, viz=False, device='cuda', dopp_mask=None):
     im_matches = {}
-    for i in range(len(pred1['pts3d'])):
+    if dopp_mask is None:
+        pair_list = np.arange(len(pred1['pts3d']))
+    else:
+        pair_list = np.arange(len(pred1['pts3d']))[dopp_mask]
+        
+    for i in pair_list:
         imidx0 = pairs[i][0]['idx']
         imidx1 = pairs[i][1]['idx']
         if 'desc' in pred1:  # mast3r
@@ -370,7 +375,9 @@ def export_matches(db, images, image_to_colmap, im_keypoints, im_matches, min_le
     print("exporting im_matches")
     for (imidx0, imidx1), colmap_matches in im_matches.items():
         imid0, imid1 = image_to_colmap[imidx0]['colmap_imid'], image_to_colmap[imidx1]['colmap_imid']
-        assert imid0 < imid1
+        # assert imid0 < imid1
+        if imid0 >= imid1:
+            continue
         final_matches = np.array([[keypoints_to_idx[imidx0][m[0]], keypoints_to_idx[imidx1][m[1]]]
                                   for m in colmap_matches
                                   if m[0] in keypoints_to_idx[imidx0] and m[1] in keypoints_to_idx[imidx1]])

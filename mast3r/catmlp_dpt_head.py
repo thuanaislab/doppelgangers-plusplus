@@ -6,6 +6,7 @@
 # --------------------------------------------------------
 import torch
 import torch.nn.functional as F
+import torch.nn as nn
 
 import mast3r.utils.path_to_dust3r  # noqa
 from dust3r.heads.postprocess import reg_dense_depth, reg_dense_conf  # noqa
@@ -96,6 +97,32 @@ class Cat_MLP_LocalFeatures_DPT_Pts3d(PixelwiseTaskWithDPT):
         return out
 
 
+class TransformerDoppPred(nn.Module):
+    def __init__(self, net):   
+        super().__init__()
+        self.patch_size = net.patch_embed.patch_size[0]
+        self.dec_depth = net.dec_depth
+        self.hooks = [0, net.dec_depth*2//4, net.dec_depth*3//4, net.dec_depth] # 6, 9, 12
+        self.feat_proj = nn.Linear(1024, net.dec_embed_dim)
+        encoder_layer = nn.TransformerEncoderLayer(d_model=net.dec_embed_dim, nhead=8, dim_feedforward=2048)
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=3)
+        self.proj = nn.Linear(net.dec_embed_dim, 2)
+        
+    def setup(self, croconet):
+        pass
+    
+    def forward(self, decout, imshape):
+        layers = [decout[i] for i in self.hooks]
+        concat_tokens = torch.cat([self.feat_proj(layers[0]), *layers[1:4], *layers[5:]], dim=1)
+
+        x = self.transformer_encoder(concat_tokens.permute(1, 0, 2))  
+        x = x.permute(1, 0, 2) 
+        pooled = x.max(dim=1)[0]
+        score = self.proj(pooled)  # Shape: [batch_size, 1]
+
+        return score
+    
+
 def mast3r_head_factory(head_type, output_mode, net, has_conf=False):
     """" build a prediction head for the decoder 
     """
@@ -118,6 +145,9 @@ def mast3r_head_factory(head_type, output_mode, net, has_conf=False):
                                                depth_mode=net.depth_mode,
                                                conf_mode=net.conf_mode,
                                                head_type='regression')
+    elif head_type == 'transformer' and output_mode == 'dg_score':
+        return TransformerDoppPred(net)
+    
     else:
         raise NotImplementedError(
             f"unexpected {head_type=} and {output_mode=}")

@@ -8,6 +8,9 @@ import numpy as np
 import mast3r.utils.path_to_dust3r  # noqa
 from dust3r.utils.device import to_numpy
 from dust3r.utils.geometry import inv, geotrf
+import PIL.Image
+import PIL.ImageOps as ImageOps
+from PIL import Image
 
 
 def reciprocal_1d(corres_1_to_2, corres_2_to_1, ret_recip=False):
@@ -217,3 +220,41 @@ def in2d_rect(corres, crops):
     is_sup = (corres[:, None] >= crops[None, :, 0:2])
     is_inf = (corres[:, None] < crops[None, :, 2:4])
     return (is_sup & is_inf).all(axis=-1)
+
+
+def pad_image_depthmap(image, depthmap, camera_intrinsics, resolution):
+    """
+    Pad the input image and depthmap to match the target aspect ratio.
+    """
+    W, H = image.size
+    target_w, target_h = resolution
+
+    # Calculate padding
+    scale_w = target_w / W
+    scale_h = target_h / H
+    if scale_w < scale_h:
+        # Image is wider than the target aspect ratio; pad the height
+        new_width = target_w
+        new_height = int(H * scale_w)
+        delta_h = target_h - new_height
+        padding = (0, delta_h // 2, 0, delta_h - delta_h // 2)
+    else:
+        # Image is taller than the target aspect ratio; pad the width
+        new_height = target_h
+        new_width = int(W * scale_h)
+        delta_w = target_w - new_width
+        padding = (delta_w // 2, 0, delta_w - delta_w // 2, 0)
+
+    # Resize the image and depthmap
+    image = image.resize((new_width, new_height), PIL.Image.LANCZOS)
+    depthmap = np.array(Image.fromarray(depthmap).resize((new_width, new_height), PIL.Image.LANCZOS))
+
+    # Pad the image and depthmap
+    image = ImageOps.expand(image, padding, fill=(0, 0, 0))  # Pad with black color
+    depthmap = np.pad(depthmap, [(padding[1], padding[3]), (padding[0], padding[2])], mode='constant', constant_values=0)
+
+    # Adjust intrinsics for padding
+    camera_intrinsics[0, 2] += padding[0]  # Adjust cx for horizontal padding
+    camera_intrinsics[1, 2] += padding[1]  # Adjust cy for vertical padding
+
+    return image, depthmap, camera_intrinsics

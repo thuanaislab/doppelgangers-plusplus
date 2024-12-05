@@ -12,7 +12,7 @@ from dust3r.datasets.scannetpp import ScanNetpp as DUSt3R_ScanNetpp  # noqa
 from dust3r.datasets.staticthings3d import StaticThings3D as DUSt3R_StaticThings3D  # noqa
 from dust3r.datasets.waymo import Waymo as DUSt3R_Waymo  # noqa
 from dust3r.datasets.wildrgbd import WildRGBD as DUSt3R_WildRGBD  # noqa
-
+from mast3r.datasets.doppelgangers import Doppelgangers as DUSt3R_Doppelgangers  # noqa
 
 class ARKitScenes(DUSt3R_ARKitScenes, MASt3RBaseStereoViewDataset):
     def __init__(self, *args, split, ROOT, **kwargs):
@@ -60,3 +60,9 @@ class WildRGBD(DUSt3R_WildRGBD, MASt3RBaseStereoViewDataset):
     def __init__(self, mask_bg=True, *args, ROOT, **kwargs):
         super().__init__(mask_bg, *args, ROOT=ROOT, **kwargs)
         self.is_metric_scale = True
+
+class Doppelgangers(DUSt3R_Doppelgangers, MASt3RBaseStereoViewDataset):
+    def __init__(self, *args, split, ROOT, trainon, teston, **kwargs):
+        super().__init__(*args, split=split, ROOT=ROOT, trainon=trainon, teston=teston, **kwargs)
+        self.is_metric_scale = False
+        self.mast3r_crop = False

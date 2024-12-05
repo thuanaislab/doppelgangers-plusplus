@@ -33,7 +33,7 @@ dust3r.datasets.WildRGBD = WildRGBD
 dust3r.datasets.Doppelgangers = Doppelgangers
 
 from mast3r.training import get_args_parser as dust3r_get_args_parser  # noqa
-from mast3r.training import train  # noqa
+from mast3r.training import test  # noqa
 
 
 def get_args_parser():
@@ -47,4 +47,4 @@ def get_args_parser():
 if __name__ == '__main__':
     args = get_args_parser()
     args = args.parse_args()
-    train(args)
+    test(args)
