@@ -3,7 +3,7 @@
 [Yuanbo Xiangli](https://kam1107.github.io/), [Ruojin Cai](https://www.cs.cornell.edu/~ruojin/), [Hanyu Chen](https://hanyuc.com/), [Jeffrey Byrne](https://www.jeffreybyrne.com/), [Noah Snavely](https://www.cs.cornell.edu/~snavely/) <br />
 
 
-[[`Project Page`](https://doppelgangers25.github.io/doppelgangers_plusplus/)][[`Viewer`](https://doppelgangers25.github.io/doppelganger-viewer/)]
+[[`Project Page`](https://doppelgangers25.github.io/doppelgangers_plusplus/)]
 
 ## Overview
 
@@ -116,8 +116,7 @@ mv data/doppelgangers/pairs_metadata/* data/pairs_metadata/
 rm -rf data/doppelgangers/pairs_metadata
 ```
 
-### VisymScenes Dataset 
-## TODO List
+### VisymScenes Dataset (TODO)
 - [x] Data release
 
 

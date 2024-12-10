@@ -134,4 +134,3 @@ slurm.sub
 *.ply
 weights/
 asmk
-run.sh
