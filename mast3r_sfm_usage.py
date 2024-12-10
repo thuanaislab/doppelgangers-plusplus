@@ -170,10 +170,10 @@ if __name__ == '__main__':
         reconstruction_path = os.path.join(args.output_path, "reconstruction")
         os.makedirs(reconstruction_path, exist_ok=True)
         
-        try:
-            colmap_run_mapper(args.colmap_exe_command, colmap_db_path, reconstruction_path, root_path)
-        except:
-            print("unable to reconstruct scene")
+        # try:
+        colmap_run_mapper(args.colmap_exe_command, colmap_db_path, reconstruction_path, root_path)
+        # except:
+        #     print("unable to reconstruct scene")
     
 
 

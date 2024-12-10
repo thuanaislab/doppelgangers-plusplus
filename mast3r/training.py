@@ -173,7 +173,7 @@ def test(args):
             print(f"gt: {gt}, pred: {pred}")
         
         # save gt and pred in a file
-        average_precision = average_precision_score(np.array(gts), np.array(preds))
+        ap = average_precision_score(np.array(gts), np.array(preds))
         auc = roc_auc_score(np.array(gts), np.array(preds))
         
         match = re.search(r"teston=\[(.*?)\]", args.test_dataset)
@@ -184,7 +184,7 @@ def test(args):
             print("teston not found")
             
         import pdb; pdb.set_trace()
-        np.save(os.path.join(args.output_dir, f"{os.path.splitext(args.pretrained)[0].split('/')[-1]}/eval_visym_ap{average_precision:.4f}_auc{auc:.4f}.npy"), {'pred': preds, 'gt': gts})
+        np.save(os.path.join(args.output_dir, f"{os.path.splitext(args.pretrained)[0].split('/')[-1]}/eval_{teston_content[0]}_ap{ap:.4f}_auc{auc:.4f}.npy"), {'pred': preds, 'gt': gts})
 
 
 def train(args):

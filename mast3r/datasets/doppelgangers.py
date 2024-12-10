@@ -31,13 +31,13 @@ class Doppelgangers(BaseStereoViewDataset):
             if ds == 'dg':
                 self.train_metadatas += ['train_pairs_megadepth.npy', 'train_pairs_flip.npy', 'train_pairs_noflip.npy']
             if ds == 'visym':
-                self.train_metadatas += ['train_pairs_visym2.npy']
+                self.train_metadatas += ['train_pairs_visym.npy']
                 
         for ds in teston:
             if ds == 'dg':
                 self.test_metadatas += ['test_pairs.npy']
             if ds == 'visym':
-                self.test_metadatas += ['test_pairs_visym2.npy']
+                self.test_metadatas += ['test_pairs_visym.npy']
             if ds == 'mapillary':
                 self.test_metadatas += ['test_pairs_msls.npy']
             
@@ -53,6 +53,7 @@ class Doppelgangers(BaseStereoViewDataset):
             'train_pairs_flip.npy': 'train_set_flip', 
             'train_pairs_noflip.npy': 'train_set_noflip', 
             'test_pairs.npy': 'test_set',
+            'train_pairs_visym.npy': '',
         }
         if split == 'train':
             self.all_pairs = []
@@ -64,22 +65,18 @@ class Doppelgangers(BaseStereoViewDataset):
                     
                     if 'visym' in metadata:
                         self.all_pairs.append([
-                            osp.join('/share/phoenix/nfs02/S2/localdisk/snavely/data/WRIVA/combined_datasets', pair[0]), 
-                            osp.join('/share/phoenix/nfs02/S2/localdisk/snavely/data/WRIVA/combined_datasets', pair[1]), 
+                            osp.join(self.ROOT, 'visymscenes', pair[0]),
+                            osp.join(self.ROOT, 'visymscenes', pair[1]),
                             int(pair[2])
                         ])
-                    elif 'msls' in metadata:
+                    elif 'doppelgangers' in metadata:
                         self.all_pairs.append([
-                            osp.join('/share/phoenix/nfs06/S9/yx642/msls/all_city_images_trainval2', pair[0]), 
-                            osp.join('/share/phoenix/nfs06/S9/yx642/msls/all_city_images_trainval2', pair[1]), 
-                            int(pair[2])
-                        ]) 
-                    else:
-                        self.all_pairs.append([
-                            osp.join(self.ROOT, 'images', meta_to_image[metadata], pair[0]), 
-                            osp.join(self.ROOT, 'images', meta_to_image[metadata], pair[1]),
+                            osp.join(self.ROOT, 'doppelgangers', 'images', meta_to_image[metadata], pair[0]), 
+                            osp.join(self.ROOT, 'doppelgangers', 'images', meta_to_image[metadata], pair[1]),
                             pair[2]
-                        ])   
+                        ])  
+                    else:
+                        pass 
 
             np.random.shuffle(self.all_pairs)
         else:
@@ -92,22 +89,18 @@ class Doppelgangers(BaseStereoViewDataset):
 
                     if 'visym' in metadata:
                         self.all_pairs.append([
-                            osp.join('/share/phoenix/nfs02/S2/localdisk/snavely/data/WRIVA/combined_datasets', pair[0]), 
-                            osp.join('/share/phoenix/nfs02/S2/localdisk/snavely/data/WRIVA/combined_datasets', pair[1]), 
+                            osp.join(self.ROOT, 'visymscenes', pair[0]),
+                            osp.join(self.ROOT, 'visymscenes', pair[1]),
                             int(pair[2])
                         ])
-                    elif 'msls' in metadata:
-                        self.all_pairs.append([
-                            osp.join('/share/phoenix/nfs06/S9/yx642/msls/all_city_images_trainval2', pair[0]), 
-                            osp.join('/share/phoenix/nfs06/S9/yx642/msls/all_city_images_trainval2', pair[1]), 
-                            int(pair[2])
-                        ])
-                    else:
+                    elif 'doppelgangers' in metadata:
                         self.all_pairs.append([
                             osp.join(self.ROOT, 'images', meta_to_image[metadata], pair[0]), 
                             osp.join(self.ROOT, 'images', meta_to_image[metadata], pair[1]),
                             pair[2]
                         ])
+                    else:
+                        pass
                         
             np.random.shuffle(self.all_pairs)
 
