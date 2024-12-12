@@ -95,8 +95,8 @@ class Doppelgangers(BaseStereoViewDataset):
                         ])
                     elif 'doppelgangers' in metadata:
                         self.all_pairs.append([
-                            osp.join(self.ROOT, 'images', meta_to_image[metadata], pair[0]), 
-                            osp.join(self.ROOT, 'images', meta_to_image[metadata], pair[1]),
+                            osp.join(self.ROOT, 'doppelgangers', 'images', meta_to_image[metadata], pair[0]), 
+                            osp.join(self.ROOT, 'doppelgangers', 'images', meta_to_image[metadata], pair[1]),
                             pair[2]
                         ])
                     else:

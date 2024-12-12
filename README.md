@@ -116,8 +116,33 @@ mv data/doppelgangers/pairs_metadata/* data/pairs_metadata/
 rm -rf data/doppelgangers/pairs_metadata
 ```
 
-### VisymScenes Dataset (TODO)
-- [x] Data release
+### VisymScenes Dataset
+* Download chunked zip files from [``huggingface``](https://huggingface.co/datasets/doppelgangers25/VisymScenes). Recover original files with script:
+```python
+import os
+import zipfile
+
+def recover_folder_from_chunks(chunks_folder, output_folder):
+    os.makedirs(output_folder, exist_ok=True)
+
+    zip_files = [f for f in os.listdir(chunks_folder) if f.endswith(".zip")]
+    zip_files.sort()
+
+    for zip_file in zip_files:
+        zip_path = os.path.join(chunks_folder, zip_file)
+        print(f"Extracting {zip_path}...")
+        
+        with zipfile.ZipFile(zip_path, 'r') as zipf:
+            zipf.extractall(output_folder)
+    
+    print(f"Recovery complete. Files restored to {output_folder}")
+
+chunks_folder = "/path/to/chunked/zipfiles"
+output_folder = "data/visymscenes"
+
+recover_folder_from_chunks(chunks_folder, output_folder)
+```
+* Also download `test_pairs_visym.npy` and `train_pairs_visym.npy`, put them under `data/pairs_metadata`.
 
 
 ## Pretrained Model
