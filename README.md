@@ -22,7 +22,7 @@ class="center">
 1. Clone this repo:
 
 ```
-git clone --recursive https://github.com/doppelgangers25/doppelgangers-plusplus.git 
+git clone --recursive https://github.com/thuanaislab/doppelgangers-plusplus.git 
 cd doppelgangers-plusplus
 ```
 
